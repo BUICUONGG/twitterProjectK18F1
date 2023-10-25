@@ -4,6 +4,7 @@ import dataBaseService from '~/services/dataBase.services'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { RegisterReqBody } from '~/models/requests/Users.request'
+
 export const loginController = async (req: Request, res: Response) => {
   // lấy user_id từ user của req
   const { user }: any = req

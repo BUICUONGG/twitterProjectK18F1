@@ -33,7 +33,7 @@ class UsersService {
       })
     )
 
-    //lay user tu acout vua taoj
+    //lay user tu acount vua taoj
     const user_id = result.insertedId.toString()
     //từ user_id tạo ra 1 access token và 1 refresh_token
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
