@@ -4,6 +4,10 @@ import { RegisterReqBody } from '~/models/requests/Users.request'
 import { hashPassword } from '~/utils/crypto'
 import { signToken } from '~/utils/jwt'
 import { TokenType } from '~/constants/enums'
+import { ObjectId } from 'mongodb'
+import RefreshToken from '~/models/schemas/RefreshToken.schema'
+import { config } from 'dotenv'
+config()
 
 class UsersService {
   private signAccessToken(user_id: string) {
@@ -37,6 +41,13 @@ class UsersService {
     const user_id = result.insertedId.toString()
     //từ user_id tạo ra 1 access token và 1 refresh_token
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+    // luuw accesstoKen và refresh_token vào database
+    await dataBaseService.refreshToken.insertOne(
+      new RefreshToken({
+        token: refresh_token,
+        user_id: new ObjectId(user_id)
+      })
+    )
     return { access_token, refresh_token }
   }
   async checkEmailExist(email: string) {
@@ -46,6 +57,13 @@ class UsersService {
   }
   async login(user_id: string) {
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+    //lưu refresh và access Token vaof database
+    await dataBaseService.refreshToken.insertOne(
+      new RefreshToken({
+        token: refresh_token,
+        user_id: new ObjectId(user_id)
+      })
+    )
     return { access_token, refresh_token }
   }
 }
