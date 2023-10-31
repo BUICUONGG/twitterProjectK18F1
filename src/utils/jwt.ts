@@ -4,11 +4,11 @@ import { TokenPayload } from '~/models/requests/Users.request'
 config()
 export const signToken = ({
   payload,
-  privateKey = process.env.JWT_SECRET as string,
+  privateKey,
   options = { algorithm: 'HS256' }
 }: {
   payload: string | object | Buffer
-  privateKey?: string
+  privateKey: string
   options?: jwt.SignOptions
 }) => {
   return new Promise<string>((resolve, reject) => {
@@ -19,13 +19,7 @@ export const signToken = ({
   })
 }
 // hàm kiểm tra token có phải của mình tạo r akhông ? nếu cos thì trả ra payload
-export const verifyToken = ({
-  token,
-  secredOrPublickey = process.env.JWT_SECRET as string
-}: {
-  token: string
-  secredOrPublickey?: string
-}) => {
+export const verifyToken = ({ token, secredOrPublickey }: { token: string; secredOrPublickey: string }) => {
   return new Promise<TokenPayload>((resolve, reject) => {
     jwt.verify(token, secredOrPublickey, (error, decoded) => {
       if (error) throw reject(error)
