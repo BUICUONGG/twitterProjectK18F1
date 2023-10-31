@@ -396,7 +396,7 @@ export const verifyForgotPasswordTokenValidator = validate(
 
               if (error instanceof JsonWebTokenError) {
                 throw new ErrorWithStatus({
-                  message: capitalize(USERS_MESSAGES.REFRESH_TOKEN_IS_INVALID),
+                  message: capitalize((error as JsonWebTokenError).message),
                   status: HTTP_STATUS.UNAUTHORIZED
                 })
               }
