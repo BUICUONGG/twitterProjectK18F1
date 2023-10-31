@@ -17,6 +17,7 @@ import HTTP_STATUS from '~/constants/httpStatus'
 import { verifyToken } from '~/utils/jwt'
 import { constants } from 'http2'
 import { JsonWebTokenError } from 'jsonwebtoken'
+import { ObjectId } from 'mongodb'
 
 //khi register thì
 // ta sẽ có 1 req.body gồm
@@ -269,7 +270,7 @@ export const refreshTokenValidator = validate(
   )
 )
 
-export const emailVeriffyTokenValidator = validate(
+export const emailVerifyTokenValidator = validate(
   checkSchema(
     {
       email_verify_token: {
@@ -292,6 +293,107 @@ export const emailVeriffyTokenValidator = validate(
               ;(req as Request).decoded_email_verify_token = decoded_email_verify_token
             } catch (error) {
               //neu loi phat sinh trong quas tronh verify thi minh tao thanh loi co status
+              if (error instanceof JsonWebTokenError) {
+                throw new ErrorWithStatus({
+                  message: capitalize(USERS_MESSAGES.REFRESH_TOKEN_IS_INVALID),
+                  status: HTTP_STATUS.UNAUTHORIZED
+                })
+              }
+              //nếu lôi k phải dạng Jsonwebtoken
+              throw error
+            }
+            return true
+          }
+        }
+      }
+    },
+    ['body']
+  )
+)
+
+export const forgotPasswordValidator = validate(
+  checkSchema(
+    {
+      email: {
+        notEmpty: {
+          errorMessage: USERS_MESSAGES.EMAIL_IS_REQUIRED
+        },
+        isEmail: {
+          errorMessage: USERS_MESSAGES.EMAIL_IS_INVALID
+        },
+        trim: true,
+        custom: {
+          options: async (value, { req }) => {
+            // dua vao email tim doi tuong
+            const user = await dataBaseService.users.findOne({
+              email: value
+            })
+            if (user === null) {
+              throw new ErrorWithStatus({
+                message: USERS_MESSAGES.USER_NOT_FOUND,
+                status: HTTP_STATUS.NOT_FOUND
+              })
+            }
+            req.user = user
+            return true
+          }
+        }
+      }
+    },
+    ['body']
+  )
+)
+
+export const verifyForgotPasswordTokenValidator = validate(
+  checkSchema(
+    {
+      forgot_password_token: {
+        trim: true,
+        custom: {
+          options: async (value: string, { req }) => {
+            // kiem tra nguoi dung cos truyen len forgot_paassword_token hay ko
+            if (!value) {
+              throw new ErrorWithStatus({
+                message: USERS_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_REQUIRED,
+                status: HTTP_STATUS.UNAUTHORIZED
+              })
+            }
+            try {
+              //verify email_verify_token de lay decoded_email_verify_token
+              const decoded_forgot_password_token = await verifyToken({
+                token: value,
+                secredOrPublickey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
+              })
+              ;(req as Request).decoded_forgot_password_token = decoded_forgot_password_token
+              const { user_id } = decoded_forgot_password_token
+              const user = await dataBaseService.users.findOne({
+                _id: new ObjectId(user_id)
+              })
+              if (user === null) {
+                throw new ErrorWithStatus({
+                  message: USERS_MESSAGES.USER_NOT_FOUND,
+                  status: HTTP_STATUS.UNAUTHORIZED //401
+                })
+              }
+              //nếu forgot_password_token đã được sử dụng rồi thì throw error
+              //forgot_password_token truyền lên khác với forgot_password_token trong database
+              //nghĩa là người dùng đã sử dụng forgot_password_token này rồi
+              if (user.forgot_password_token !== value) {
+                throw new ErrorWithStatus({
+                  message: USERS_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_INCORRECT,
+                  status: HTTP_STATUS.UNAUTHORIZED //401
+                })
+              }
+              //nếu k tìm đc user thì throw error
+              if (user === null) {
+                throw new ErrorWithStatus({
+                  message: USERS_MESSAGES.USER_NOT_FOUND,
+                  status: HTTP_STATUS.UNAUTHORIZED //401
+                })
+              }
+            } catch (error) {
+              //neu loi phat sinh trong quas tronh verify thi minh tao thanh loi co status
+
               if (error instanceof JsonWebTokenError) {
                 throw new ErrorWithStatus({
                   message: capitalize(USERS_MESSAGES.REFRESH_TOKEN_IS_INVALID),

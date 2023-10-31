@@ -3,7 +3,7 @@ import User from '~/models/schemas/User.schema'
 import dataBaseService from '~/services/dataBase.services'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
-import { LogoutReqBody, RegisterReqBody, TokenPayload } from '~/models/requests/Users.request'
+import { LogoutReqBody, RegisterReqBody, TokenPayload, VerifyEmailReqBody } from '~/models/requests/Users.request'
 import { ObjectId } from 'mongodb'
 import { USERS_MESSAGES } from '~/constants/messages'
 import { ErrorWithStatus } from '~/models/Errors'
@@ -39,7 +39,10 @@ export const logoutController = async (req: Request<ParamsDictionary, any, Logou
   res.json(result)
 }
 
-export const emailVerifyTokenController = async (req: Request, res: Response) => {
+export const emailVerifyTokenController = async (
+  req: Request<ParamsDictionary, any, VerifyEmailReqBody>,
+  res: Response
+) => {
   //nếu mà code vào đuọce đây nghĩa là email_verify_token hợp lệ
   // và mình lấy đuọce decoded_email_verify_token
   const { user_id } = req.decoded_email_verify_token as TokenPayload
@@ -49,6 +52,13 @@ export const emailVerifyTokenController = async (req: Request, res: Response) =>
     throw new ErrorWithStatus({
       message: USERS_MESSAGES.USER_NOT_FOUND,
       status: HTTP_STATUS.NOT_FOUND
+    })
+  }
+  //nếu mà không khớp email_verify_token
+  if (user.email_verify_token !== (req.body.email_verify_token as string)) {
+    throw new ErrorWithStatus({
+      message: USERS_MESSAGES.EMAIL_VERIFY_TOKEN_IS_INCORRECT,
+      status: HTTP_STATUS.UNAUTHORIZED
     })
   }
   if (user.verify === UserVerifyStatus.Verified && user.email_verify_token === '') {
@@ -62,5 +72,55 @@ export const emailVerifyTokenController = async (req: Request, res: Response) =>
   return res.json({
     message: USERS_MESSAGES.VERIFY_EMAIL_SUCCESS,
     result
+  })
+}
+
+export const resendEmailVerifyController = async (req: Request, res: Response) => {
+  //nếu vào duọce đây có nghĩa là access_token hợp lệ
+  // và mình đã lấy đuọce decoded+authorization
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const user = await dataBaseService.users.findOne({
+    _id: new ObjectId(user_id)
+  })
+  //nếu k có user thì trả về lỗi 404: not found
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
+      message: USERS_MESSAGES.USER_NOT_FOUND
+    })
+  }
+
+  //nếu đã verify rồi thì không cần verify nữa
+  //nếu user đã verify email trước đó rồi thì trả về lỗi 400: bad request
+  if (user.verify == UserVerifyStatus.Verified) {
+    return res.json({
+      message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED_BEFORE
+    })
+  }
+  if (user.verify === UserVerifyStatus.Banned) {
+    throw new ErrorWithStatus({
+      message: USERS_MESSAGES.USER_BANNED,
+      status: HTTP_STATUS.FORBIDDEN // 403
+    })
+  }
+  // user nayf that sự chưa verify: mình sẽ tạo lại email_verify_token
+  // cập nhânt lại user
+  const result = await usersService.resendEmailVerify(user_id)
+  return res.json(result)
+}
+
+export const forgotPasswordController = async (req: Request, res: Response) => {
+  //laay user_id từ cái user của req
+  const { _id } = req.user as User
+  //dùng cái _id tìm và câ[j nhật lại user thêm vào forgo_password_token]
+  const result = await usersService.forgotPassword((_id as ObjectId).toString())
+  return res.json(result)
+}
+export const verifyForgotPasswordTokenController = async (req: Request, res: Response) => {
+  //nếu đã đến bước này nghĩa là ta đã tìm có forgot_password_token hợp lệ
+  //và đã lưu vào req.decoded_forgot_password_token
+  //thông tin của user
+  //ta chỉ cần thông báo rằng token hợp lệ
+  return res.json({
+    message: USERS_MESSAGES.VERIFY_FORGOT_PASSWORD_TOKEN_SUCCESS
   })
 }

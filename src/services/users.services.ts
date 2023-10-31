@@ -40,6 +40,14 @@ class UsersService {
     })
   }
 
+  private signForgotPasswordToken(user_id: string) {
+    return signToken({
+      payload: { user_id, token_type: TokenType.EmailVerifycationTOken },
+      options: { expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPTRE_IN },
+      privateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
+    })
+  }
+
   async register(payload: RegisterReqBody) {
     const user_id = new ObjectId()
     const email_verify_token = await this.signEmailVerifyToken(user_id.toString())
@@ -112,6 +120,39 @@ class UsersService {
       })
     )
     return { access_token, refresh_token }
+  }
+
+  async resendEmailVerify(user_id: string) {
+    // tạo ra access_token và refréh_token
+    const email_verify_token = await this.signEmailVerifyToken(user_id)
+    // lưu refresh_token vào email
+    await dataBaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
+      {
+        $set: {
+          email_verify_token,
+          updated_at: '$$NOW'
+        }
+      }
+    ])
+    console.log(email_verify_token)
+    return { message: USERS_MESSAGES.RESEND_EMAIL_VERIFY_SUCCESS } // resend email verify success
+  }
+  async forgotPassword(user_id: string) {
+    // tao ra forgot_password_token
+    const forgot_password_token = await this.signForgotPasswordToken(user_id)
+    // update lai user
+    await dataBaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
+      {
+        $set: {
+          forgot_password_token,
+          updated_at: '$$NOW'
+        }
+      }
+    ])
+    // gia lap
+    console.log(forgot_password_token)
+    return { message: USERS_MESSAGES.CHECK_EMAIL_TO_RESET_PASSWORD }
+    // check email to reset password
   }
 }
 
