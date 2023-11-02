@@ -196,6 +196,32 @@ class UsersService {
     )
     return user
   }
+
+  async updateMe(user_id: string, payload: any) {
+    //dùng user_id tìm user và update lại password
+    const _payload = payload.date_of_birth ? { ...payload, date_of_birth: new Date(payload.date_of_birth) } : payload
+    // tiến hành update
+    const user = await dataBaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(user_id) },
+      [
+        {
+          $set: {
+            ...payload,
+            updated_at: '$$NOW'
+          }
+        }
+      ],
+      {
+        returnDocument: 'after', // trả về document sau khi update
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+    return user.value
+  }
 }
 
 const usersService = new UsersService()
