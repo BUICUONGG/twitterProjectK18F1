@@ -21,7 +21,7 @@ export const loginController = async (req: Request, res: Response) => {
   const user = req.user as User
   const user_id = user._id as ObjectId
   // dùng user_id tạo access_token và refresh_token
-  const result = await usersService.login(user_id.toString())
+  const result = await usersService.login({ user_id: user_id.toString(), verify: user.verify })
   //res access_token và refresh_token cho client
   res.json({
     message: USERS_MESSAGES.LOGIN_SUCCESS,
@@ -116,9 +116,12 @@ export const resendEmailVerifyController = async (req: Request, res: Response) =
 
 export const forgotPasswordController = async (req: Request, res: Response) => {
   //laay user_id từ cái user của req
-  const { _id } = req.user as User
+  const { _id, verify } = req.user as User
   //dùng cái _id tìm và câ[j nhật lại user thêm vào forgo_password_token]
-  const result = await usersService.forgotPassword((_id as ObjectId).toString())
+  const result = await usersService.forgotPassword({
+    user_id: (_id as ObjectId).toString(),
+    verify
+  })
   return res.json(result)
 }
 export const verifyForgotPasswordTokenController = async (req: Request, res: Response) => {
