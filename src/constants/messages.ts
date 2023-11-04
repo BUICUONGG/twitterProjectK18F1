@@ -56,5 +56,6 @@ export const USERS_MESSAGES = {
   WEBSITE_LENGTH_MUST_BE_LESS_THAN_200: 'Website length must be less than 200',
   USERNAME_MUST_BE_A_STRING: 'Username must be a string',
   USERNAME_LENGTH_MUST_BE_LESS_THAN_50: 'Username length must be less than 50',
-  UPDATE_ME_SUCCESS: 'Update me success'
+  UPDATE_ME_SUCCESS: 'Update me success',
+  GET_PROFILE_SUCCESS: 'Get profile success'
 } as const
