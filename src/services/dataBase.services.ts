@@ -5,6 +5,7 @@ import { MongoClient, ServerApiVersion, Db, Collection } from 'mongodb'
 import { config } from 'dotenv'
 import User from '~/models/schemas/User.schema'
 import RefreshToken from '~/models/schemas/RefreshToken.schema'
+import { Follower } from '~/models/schemas/Followers.schema'
 config()
 
 const uri = 'mongodb+srv://cuongbui10704:cuongbui10704@tweetproject.3yhxuyx.mongodb.net/?retryWrites=true&w=majority'
@@ -33,6 +34,9 @@ class DataBaseService {
   }
   get refreshToken(): Collection<RefreshToken> {
     return this.db.collection(process.env.DB_REFRESH_TOKEN_COLLECTIO as string)
+  }
+  get followers(): Collection<Follower> {
+    return this.db.collection(process.env.DB_FOLLOWERS_COLLECTION as string)
   }
 }
 

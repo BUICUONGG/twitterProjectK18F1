@@ -1,9 +1,10 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import User from '~/models/schemas/User.schema'
 import dataBaseService from '~/services/dataBase.services'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 import {
+  FollowReqBody,
   GetProfileReqParams,
   LogoutReqBody,
   RegisterReqBody,
@@ -176,3 +177,16 @@ export const getProfileController = async (req: Request<GetProfileReqParams>, re
     result
   })
 }
+
+export const followController = async (
+  req: Request<ParamsDictionary, any, FollowReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_authorization as TokenPayload // lấy user_id từ decode_authorization của access token
+  const { followed_user_id } = req.body // lấy followed_user_id từ req.body
+  const result = await usersService.follow(user_id, followed_user_id)
+  return res.json(result)
+}
+
+export const unfollowController = () => {}
