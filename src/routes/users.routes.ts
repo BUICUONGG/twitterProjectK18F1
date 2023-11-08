@@ -179,10 +179,9 @@ usersRouter.post('/follow', accessTokenValidator, verifiedUserValidator, followV
     path: '/follow/:user_id'
     method: delete
     headers: {Authorization: Bearer <access_token>}
-  g}
-    */
+*/
 usersRouter.delete(
-  '/follow/:user_id',
+  '/unfollow/:user_id',
   accessTokenValidator,
   verifiedUserValidator,
   unfollowValidator,

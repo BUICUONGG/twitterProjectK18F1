@@ -5,7 +5,7 @@
 // đuọc truyền lên hay kjhông?
 
 import { Request, Response, NextFunction } from 'express'
-import { ParamSchema, checkSchema } from 'express-validator'
+import { ParamSchema, body, checkSchema } from 'express-validator'
 import { validate } from './../utils/validation'
 import usersService from '~/services/users.services'
 import { ErrorWithStatus } from '~/models/Errors'
@@ -19,6 +19,7 @@ import { JsonWebTokenError } from 'jsonwebtoken'
 import { ObjectId } from 'mongodb'
 import { TokenPayload } from '~/models/requests/Users.request'
 import { UserVerifyStatus } from '~/constants/enums'
+import { REGEX_USERNAME } from '~/constants/regex'
 
 const passwordSchema: ParamSchema = {
   notEmpty: {
@@ -111,6 +112,30 @@ const imageSchema: ParamSchema = {
       max: 400
     },
     errorMessage: USERS_MESSAGES.IMAGE_LEGTH_MUST_BE_FROM_1_TO_400
+  }
+}
+
+const userIdSchema: ParamSchema = {
+  custom: {
+    options: async (value: string, { req }) => {
+      //check value có phải object không?
+      if (!ObjectId.isValid(value)) {
+        throw new ErrorWithStatus({
+          message: USERS_MESSAGES.INVALID_USER_ID,
+          status: HTTP_STATUS.NOT_FOUND
+        })
+      }
+      //vào database tìm user đó xem có không?
+      const user = await dataBaseService.users.findOne({ _id: new ObjectId(value) })
+      if (user === null) {
+        throw new ErrorWithStatus({
+          message: USERS_MESSAGES.USER_NOT_FOUND,
+          status: HTTP_STATUS.NOT_FOUND
+        })
+      }
+      //nếu vượt qua hết if thì return true
+      return true
+    }
   }
 }
 //khi register thì
@@ -518,12 +543,20 @@ export const updateMeValidator = validate(
           errorMessage: USERS_MESSAGES.USERNAME_MUST_BE_A_STRING ////messages.ts thêm USERNAME_MUST_BE_A_STRING: 'Username must be a string'
         },
         trim: true,
-        isLength: {
-          options: {
-            min: 1,
-            max: 50
-          },
-          errorMessage: USERS_MESSAGES.USERNAME_LENGTH_MUST_BE_LESS_THAN_50 //messages.ts thêm USERNAME_LENGTH_MUST_BE_LESS_THAN_50: 'Username length must be less than 50'
+        custom: {
+          options: async (value, { req }) => {
+            if (REGEX_USERNAME.test(value) === false) {
+              throw new Error(USERS_MESSAGES.USERNAME_MUST_BE_A_STRING)
+            }
+            // tìm user bằng username người dùng muốn cập nhật
+            const user = await dataBaseService.users.findOne({
+              username: value
+            })
+            if (user) {
+              throw new Error(USERS_MESSAGES.USERNAME_ALREADY_EXIST)
+            }
+            return true
+          }
         }
       },
       avatar: imageSchema,
@@ -535,30 +568,15 @@ export const updateMeValidator = validate(
 
 export const followValidator = validate(
   checkSchema({
-    followed_user_id: {
-      custom: {
-        options: async (value: string, { req }) => {
-          //check value có phải object không?
-          if (!ObjectId.isValid(value)) {
-            throw new ErrorWithStatus({
-              message: USERS_MESSAGES.INVALID_FOLLOWED_USER_ID,
-              status: HTTP_STATUS.NOT_FOUND
-            })
-          }
-          //vào database tìm user đó xem có không?
-          const followed_user = await dataBaseService.users.findOne({ _id: new ObjectId(value) })
-          if (!followed_user) {
-            throw new ErrorWithStatus({
-              message: USERS_MESSAGES.FOLLOWED_USER_NOT_FOUND,
-              status: HTTP_STATUS.NOT_FOUND
-            })
-          }
-          //nếu vượt qua hết if thì return true
-          return true
-        }
-      }
-    }
+    followed_user_id: userIdSchema
   })
 )
 
-export const unfollowValidator = () => {}
+export const unfollowValidator = validate(
+  checkSchema(
+    {
+      user_id: userIdSchema
+    },
+    ['params']
+  )
+)
