@@ -187,4 +187,14 @@ usersRouter.delete(
   unfollowValidator,
   wrapAsync(unfollowController)
 )
+
+/*
+  des: change password
+  path: '/change-password'
+  method: PUT
+  headers: {Authorization: Bearer <access_token>}
+  Body: {old_password: string, password: string, confirm_password: string}
+g}
+  */
+
 export default usersRouter

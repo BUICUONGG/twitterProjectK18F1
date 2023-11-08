@@ -5,14 +5,14 @@
 // đuọc truyền lên hay kjhông?
 
 import { Request, Response, NextFunction } from 'express'
-import { ParamSchema, body, checkSchema } from 'express-validator'
+import { ParamSchema, checkSchema } from 'express-validator'
 import { validate } from './../utils/validation'
 import usersService from '~/services/users.services'
 import { ErrorWithStatus } from '~/models/Errors'
 import { USERS_MESSAGES } from '~/constants/messages'
 import dataBaseService from '~/services/dataBase.services'
 import { hashPassword } from '~/utils/crypto'
-import { capitalize, values } from 'lodash'
+import { capitalize } from 'lodash'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { verifyToken } from '~/utils/jwt'
 import { JsonWebTokenError } from 'jsonwebtoken'
@@ -580,3 +580,5 @@ export const unfollowValidator = validate(
     ['params']
   )
 )
+
+//  Body: {old_password: string, password: string, confirm_password: string}
