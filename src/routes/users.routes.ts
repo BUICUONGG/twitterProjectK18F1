@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import {
+  changePasswordController,
   emailVerifyTokenController,
   followController,
   forgotPasswordController,
@@ -7,6 +8,7 @@ import {
   getProfileController,
   loginController,
   logoutController,
+  refreshController,
   registerController,
   resendEmailVerifyController,
   resetPasswordController,
@@ -17,6 +19,7 @@ import {
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
+  changePasswordValidator,
   emailVerifyTokenValidator,
   followValidator,
   forgotPasswordValidator,
@@ -197,4 +200,22 @@ usersRouter.delete(
 g}
   */
 
+usersRouter.put(
+  '/change-password',
+  accessTokenValidator,
+  verifiedUserValidator,
+  changePasswordValidator,
+  wrapAsync(changePasswordController)
+)
+
+/*
+  des: refreshtoken
+  path: '/refresh-token'
+  method: POST
+  Body: {refresh_token: string}
+g}
+  */
+usersRouter.post('/refresh-token', refreshTokenValidator, wrapAsync(refreshController))
+//khỏi kiểm tra accesstoken, tại nó hết hạn rồi mà
+//refreshController chưa làm
 export default usersRouter

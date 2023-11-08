@@ -290,6 +290,47 @@ class UsersService {
       message: USERS_MESSAGES.UNFOLLOW_SUCCESS
     }
   }
+
+  async changePassword(user_id: string, password: string) {
+    await dataBaseService.users.updateOne(
+      {
+        _id: new ObjectId(user_id)
+      },
+      [
+        {
+          $set: {
+            password: hashPassword(password),
+            forgotPassword_token: '',
+            updated_at: '$$NOW'
+          }
+        }
+      ]
+    )
+    return {
+      message: USERS_MESSAGES.CHANGE_PASSWORD_SUCCESS
+    }
+  }
+
+  async refreshToken({
+    user_id,
+    verify,
+    refresh_token
+  }: {
+    user_id: string
+    verify: UserVerifyStatus
+    refresh_token: string
+  }) {
+    // tao ra access và refresh token mới
+    const [access_token, new_refresh_token] = await this.signAccessAndRefreshToken({ user_id, verify })
+    await dataBaseService.refreshToken.deleteOne({ token: refresh_token })
+    await dataBaseService.refreshToken.insertOne(
+      new RefreshToken({
+        user_id: new ObjectId(user_id),
+        token: new_refresh_token
+      })
+    )
+    return { access_token, refresh_token: new_refresh_token }
+  }
 }
 
 const usersService = new UsersService()

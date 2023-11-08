@@ -4,9 +4,11 @@ import dataBaseService from '~/services/dataBase.services'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 import {
+  ChangePasswordReqBody,
   FollowReqBody,
   GetProfileReqParams,
   LogoutReqBody,
+  RefeshTokenReqBody,
   RegisterReqBody,
   ResetPasswordReqBody,
   TokenPayload,
@@ -19,7 +21,6 @@ import { USERS_MESSAGES } from '~/constants/messages'
 import { ErrorWithStatus } from '~/models/Errors'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { UserVerifyStatus } from '~/constants/enums'
-import { pick } from 'lodash'
 
 export const loginController = async (req: Request, res: Response) => {
   // lấy user_id từ user của req
@@ -198,4 +199,29 @@ export const unfollowController = async (req: Request<UnfollowReqParams>, res: R
   // gọi hàm unfollow
   const resutl = await usersService.unfollow(user_id, followed_user_id)
   return res.json(resutl)
+}
+
+export const changePasswordController = async (
+  req: Request<ParamsDictionary, any, ChangePasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const { password } = req.body
+  const result = await usersService.changePassword(user_id, password)
+  return res.json(result)
+}
+
+export const refreshController = async (
+  req: Request<ParamsDictionary, any, RefeshTokenReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { refresh_token } = req.body
+  const { user_id, verify } = req.decoded_refresh_token as TokenPayload
+  const result = await usersService.refreshToken({ refresh_token, user_id, verify })
+  return res.json({
+    message: USERS_MESSAGES.REFRESH_TOKEN_SUCCESS,
+    result
+  })
 }

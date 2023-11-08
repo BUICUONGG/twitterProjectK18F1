@@ -1,11 +1,11 @@
-import express, { NextFunction, Request, Response } from 'express'
+import express from 'express'
 import usersRouter from './routes/users.routes'
 import dataBaseServer from './services/dataBase.services'
 import { defaultErrorHandler } from './middlewares/error.middlewares'
 
 const app = express()
 app.use(express.json())
-const PORT = 3000
+const PORT = 4000
 dataBaseServer.connect()
 
 //route mặc định

@@ -582,3 +582,41 @@ export const unfollowValidator = validate(
 )
 
 //  Body: {old_password: string, password: string, confirm_password: string}
+export const changePasswordValidator = validate(
+  checkSchema(
+    {
+      old_password: {
+        ...passwordSchema,
+        custom: {
+          options: async (value, { req }) => {
+            //lấy user_id tu req.decoded_authorization
+            const { user_id } = req.decoded_authorization as TokenPayload
+            //tìm user trong database
+            const user = await dataBaseService.users.findOne({
+              _id: new ObjectId(user_id)
+            })
+            // nếu user không tồn tại thì thrrow Error
+            if (user === null) {
+              throw new ErrorWithStatus({
+                message: USERS_MESSAGES.USER_NOT_FOUND,
+                status: HTTP_STATUS.NOT_FOUND
+              })
+            }
+            // neeus user tồn tại thì kiểm tra xem old_password có đúng với password trong database ko
+            const { password } = user
+            if (user.password !== hashPassword(value)) {
+              throw new ErrorWithStatus({
+                message: USERS_MESSAGES.OLD_PASSWORD_NOT_MATCH,
+                status: HTTP_STATUS.UNAUTHORIZED
+              })
+            }
+            return true
+          }
+        }
+      },
+      password: passwordSchema,
+      confirm_password: confirmPasswordSchema
+    },
+    ['body']
+  )
+)
