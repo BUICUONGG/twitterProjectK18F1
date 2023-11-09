@@ -1,10 +1,10 @@
 import { Router } from 'express'
-import { uploadImageController } from '~/controllers/medias.controllers'
-import { accessTokenValidator, verifiedUserValidator } from '~/middlewares/users.middlewares'
-import { wrapAsync } from '~/utils/handlers'
+import { serverImageController, serverVideoStreamController } from '~/controllers/medias.controllers'
 
 const staticRoute = Router()
 
-staticRoute.get('./image/:namefile', accessTokenValidator, verifiedUserValidator, wrapAsync(uploadImageController))
+staticRoute.get('/image/:namefile', serverImageController)
+
+staticRoute.get('/video-stream/:namefile', serverVideoStreamController)
 
 export default staticRoute

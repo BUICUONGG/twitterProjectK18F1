@@ -419,6 +419,12 @@ export const verifyForgotPasswordTokenValidator = validate(
                   status: HTTP_STATUS.UNAUTHORIZED //401
                 })
               }
+              if (user === null) {
+                throw new ErrorWithStatus({
+                  message: USERS_MESSAGES.USER_NOT_FOUND,
+                  status: HTTP_STATUS.UNAUTHORIZED //401
+                })
+              }
               //nếu forgot_password_token đã được sử dụng rồi thì throw error
               //forgot_password_token truyền lên khác với forgot_password_token trong database
               //nghĩa là người dùng đã sử dụng forgot_password_token này rồi
@@ -429,12 +435,6 @@ export const verifyForgotPasswordTokenValidator = validate(
                 })
               }
               //nếu k tìm đc user thì throw error
-              if (user === null) {
-                throw new ErrorWithStatus({
-                  message: USERS_MESSAGES.USER_NOT_FOUND,
-                  status: HTTP_STATUS.UNAUTHORIZED //401
-                })
-              }
             } catch (error) {
               //neu loi phat sinh trong quas tronh verify thi minh tao thanh loi co status
 

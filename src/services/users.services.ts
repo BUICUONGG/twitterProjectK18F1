@@ -302,7 +302,7 @@ class UsersService {
         {
           $set: {
             password: hashPassword(password),
-            forgotPassword_token: '',
+            forgot_password_token: '',
             updated_at: '$$NOW'
           }
         }
