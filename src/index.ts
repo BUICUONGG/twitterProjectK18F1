@@ -4,11 +4,10 @@ import dataBaseServer from './services/dataBase.services'
 import { defaultErrorHandler } from './middlewares/error.middlewares'
 import mediasRouter from './routes/medias.routes'
 import { initFolder } from './utils/file'
-import { config } from 'dotenv'
-import { UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from './constants/dir'
 import staticRoute from './routes/static.routes'
 import { MongoClient } from 'mongodb'
 import dataBaseService from './services/dataBase.services'
+import tweetsRouter from './routes/tweets.routes'
 
 const app = express()
 app.use(express.json())
@@ -16,6 +15,8 @@ const PORT = process.env.PORT || 4000
 initFolder()
 dataBaseServer.connect().then(() => {
   dataBaseService.indexUsers()
+  dataBaseService.indexRefreshToken()
+  dataBaseService.indexFollowers()
 })
 
 //route mặc định
@@ -25,6 +26,7 @@ app.get('/', (req, res) => {
 
 app.use('/users', usersRouter)
 app.use('/medias', mediasRouter)
+app.use('/tweets', tweetsRouter)
 // app.use('/static/video', express.static(UPLOAD_VIDEO_DIR))
 app.use('/static', staticRoute)
 
